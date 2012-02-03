@@ -14,8 +14,12 @@ class Test
         # Return if null @a or @b
         return unless (@a and @b)
 
+        # reduce @a and @b to common letters only
+        @a = @a.chars.select {|c| @b.chars.to_a.include?(c)}.join('')
+        @b = @b.chars.select {|c| @a.chars.to_a.include?(c)}.join('')
+
         # @a becomes an Array of characters
-        @a = @a.split('')
+        @a = @a.chars.to_a
         k = @a.length
         found = false
         threads = []
