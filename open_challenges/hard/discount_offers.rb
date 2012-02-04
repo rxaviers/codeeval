@@ -5,6 +5,7 @@
 # NOT COMPLETE
 
 VOWELS = %w{a e i o u}
+DEBUG = false
 
 def SS(customer, product)
     #3
@@ -23,18 +24,43 @@ def SS(customer, product)
     end
 end
 
-# Recursive way to find the biggest_SS
-def biggest_SS(ss_table, except_ys = [])
-    (ss_table[0].each_with_index.map {|ss, y|
-        if except_ys.include?(y)
-            0
-        elsif ss_table.length > 1
-            ss + biggest_SS(ss_table[1..-1], except_ys + [y])
+def biggest_SS(ss_table)
+    # Objective:
+    # For each product, get the most valuable SS. How? Give it to a customer
+    # whom if you had given any other product, it wouldn't make that much value.
+    #
+    # Let's begin with the first product.
+
+    # Many customers
+    if ss_table.length > 1
+        # Many products
+        if ss_table[0].length > 1
+            # For each customer, get the customer with max delta_ss
+            max_delta_ss_customer_i = ss_table.map {|customer_sses|
+                first_product_ss = customer_sses[0]
+                other_max_ss = customer_sses[1..-1].max
+                delta_ss = first_product_ss - other_max_ss
+            }.each_with_index.max[1]
+
+            # The remaining_ss_table is the ss_table without the customer row and
+            # without the product column.
+            remaining_ss_table = []
+            (0..ss_table.length-1).each {|customer_i|
+                remaining_ss_table<< ss_table[customer_i][1..-1] \
+                    unless customer_i == max_delta_ss_customer_i
+            }
+
+            ss_table[max_delta_ss_customer_i][0] + biggest_SS(remaining_ss_table)
+
+        # One product
         else
-            ss
+            # Return the biggest ss left
+            ss_table.transpose[0].max
         end
-    } + (ss_table.length > 1 ? [0 + biggest_SS(ss_table[1..-1], except_ys)] :
-    [0])).max
+    # One customer
+    else
+        ss_table[0][0]
+    end
 end
 
 class Test
@@ -49,7 +75,7 @@ class Test
                 SS(customer, product)
             }
         }
-        puts ss_table.inspect
+        puts ss_table.inspect if DEBUG
 
         printf "%.2f\n", biggest_SS(ss_table)
     end
@@ -76,6 +102,18 @@ class Integer
             return true if (a%i==0 and b%i==0)
         }
         return false
+    end
+end
+
+class Array
+    def top_with_index(n)
+        array = clone
+        (1..n).map {
+            max = array.max
+            index = array.index(max)
+            array[index] = 0
+            [max, index]
+        }
     end
 end
 
@@ -108,3 +146,18 @@ def backup_biggest_SS_using_permutation
         }.reduce(0, :+)
     }.max
 end
+
+# Recursive way to find the biggest_SS
+def backup_biggest_SS_using_recursion(ss_table, except_ys = [])
+    (ss_table[0].each_with_index.map {|ss, y|
+        if except_ys.include?(y)
+            0
+        elsif ss_table.length > 1
+            ss + biggest_SS(ss_table[1..-1], except_ys + [y])
+        else
+            ss
+        end
+    } + (ss_table.length > 1 ? [0 + biggest_SS(ss_table[1..-1], except_ys)] :
+    [0])).max
+end
+
